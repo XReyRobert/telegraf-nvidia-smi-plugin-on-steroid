@@ -16,6 +16,8 @@ Enjoy !
 
 Units are included in the XML Output and therefore everything is processed as strings... This requires a bit more work on the grafana dashboard requests, and it also have an impact on Influxdb storage. Might be a future improvement to remove the units so that telegraf can process metrics as numerals, or not...
 
+Tested only on Linux. Should be easily adapted to windows.
+
 
 ##Installation
 
