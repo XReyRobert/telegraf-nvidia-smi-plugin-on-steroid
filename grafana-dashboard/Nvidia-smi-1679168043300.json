@@ -1,0 +1,2165 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "barchart",
+      "name": "Bar chart",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.3.2"
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "status-history",
+      "name": "Status history",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 23,
+        "x": 0,
+        "y": 0
+      },
+      "id": 40,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"font-size: 2em;\">\n  <p>You like it? You use it? It saved you a couple of hours?</p>\n  <p>Hey 👋 <a href=\"https://www.buymeacoffee.com/xrrxrr\">You can now buy me a coffee</a>! ☕️</p>\n</div>\n",
+        "mode": "html"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "refId": "A"
+        }
+      ],
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 21,
+      "panels": [],
+      "title": "General Stats",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 0,
+        "y": 5
+      },
+      "id": 34,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^gpu_utilization_gpu_util \\{gpuid=\"00000000:84:00\\.0\", host=\"proxmox\"\\}$/",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_utilization_gpu_util\" )\n    |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> toInt()\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n",
+          "refId": "A"
+        }
+      ],
+      "title": " GPU Utilization",
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": "fb_memory_usage_used {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "fb_memory_usage_total {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": "fb_memory_usage_used {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"} / fb_memory_usage_total {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}",
+              "operator": "*",
+              "reducer": "sum",
+              "right": "100"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true
+          }
+        }
+      ],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 5,
+        "y": 5
+      },
+      "id": 33,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^percent \\* 100$/",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_fb_memory_usage_free\" or r[\"_field\"] == \"gpu_fb_memory_usage_total\" or r[\"_field\"] == \"gpu_fb_memory_usage_used\")\n    |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> toInt()\n  |> last()\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n",
+          "refId": "A"
+        }
+      ],
+      "title": " Memory",
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "percent",
+            "binary": {
+              "left": "gpu_fb_memory_usage_used {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "gpu_fb_memory_usage_total {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": "percent",
+              "operator": "*",
+              "reducer": "sum",
+              "right": "100"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true
+          }
+        }
+      ],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 10,
+        "y": 5
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "/^gpu_product_name \\{gpuid=\"00000000:84:00\\.0\", host=\"proxmox\"\\}$/",
+          "values": false
+        },
+        "text": {
+          "titleSize": 5
+        },
+        "textMode": "value"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_product_architecture\" or r[\"_field\"] == \"gpu_product_brand\" or r[\"_field\"] == \"gpu_product_name\" or r[\"_field\"] == \"gpu_cuda_version\" or r[\"_field\"] == \"gpu_driver_version\")\n  |> last()\n  ",
+          "refId": "A"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 14,
+        "y": 5
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^gpu_product_architecture \\{gpuid=\"00000000:84:00\\.0\", host=\"proxmox\"\\}$/",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_product_architecture\" or r[\"_field\"] == \"gpu_product_brand\" or r[\"_field\"] == \"gpu_product_name\" or r[\"_field\"] == \"gpu_cuda_version\" or r[\"_field\"] == \"gpu_driver_version\")\n  |> last()\n  ",
+          "refId": "A"
+        }
+      ],
+      "title": "Architecture",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 17,
+        "y": 5
+      },
+      "id": 19,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "/^gpu_ecc_mode_current_ecc \\{gpuid=\"00000000:84:00\\.0\", host=\"proxmox\"\\}$/",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_ecc_mode_current_ecc\" )\n  |> last()\n",
+          "refId": "A"
+        }
+      ],
+      "title": "ECC Mode",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 10,
+        "y": 7
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^gpu_product_brand \\{gpuid=\"00000000:84:00\\.0\", host=\"proxmox\"\\}$/",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_product_architecture\" or r[\"_field\"] == \"gpu_product_brand\" or r[\"_field\"] == \"gpu_product_name\" or r[\"_field\"] == \"gpu_cuda_version\" or r[\"_field\"] == \"gpu_driver_version\")\n  |> last()\n  ",
+          "refId": "A"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 14,
+        "y": 7
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "/^driver_version \\{gpuid=\"00000000:84:00\\.0\", host=\"proxmox\"\\}$/",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"product_architecture\" or r[\"_field\"] == \"product_brand\" or r[\"_field\"] == \"product_name\" or r[\"_field\"] == \"driver_version\" or r[\"_field\"] == \"cuda_version\")\n  |> last()\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Driver Version",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 17,
+        "y": 7
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "/^cuda_version \\{gpuid=\"00000000:84:00\\.0\", host=\"proxmox\"\\}$/",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"product_architecture\" or r[\"_field\"] == \"product_brand\" or r[\"_field\"] == \"product_name\" or r[\"_field\"] == \"driver_version\" or r[\"_field\"] == \"cuda_version\")\n  |> last()\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Cuda Version",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 38,
+      "panels": [],
+      "title": "Utilization",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decmbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_fb_memory_usage_total {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Total"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_fb_memory_usage_free {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Free"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_fb_memory_usage_used {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Used"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_fb_memory_usage_reserved {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Reserved"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 0,
+        "y": 10
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_fb_memory_usage_free\" or r[\"_field\"] == \"gpu_fb_memory_usage_reserved\" or r[\"_field\"] == \"gpu_fb_memory_usage_total\" or r[\"_field\"] == \"gpu_fb_memory_usage_used\")\n    |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> toInt()\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Utilization",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "%"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_utilization_decoder_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "decoder"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_utilization_encoder_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "encoder"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_utilization_gpu_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "gpu"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_utilization_memory_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "memory"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 10,
+        "x": 10,
+        "y": 10
+      },
+      "id": 11,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "normal",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 100
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_utilization_encoder_util\" or r[\"_field\"] == \"gpu_utilization_gpu_util\" or r[\"_field\"] == \"gpu_utilization_memory_util\" or r[\"_field\"] == \"gpu_utilization_decoder_util\")\n    |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> toInt()\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n",
+          "refId": "A"
+        }
+      ],
+      "title": "GPU Utilization",
+      "transformations": [],
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "MB/s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_pci_rx_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"} / 1024"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Reception (TX)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_pci_tx_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"} / 1024"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Transmission (RX)"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 0,
+        "y": 15
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_pci_rx_util\" or r[\"_field\"] == \"gpu_pci_tx_util\")\n  |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> toFloat()\n  |> yield(name: \"last\")",
+          "refId": "A"
+        }
+      ],
+      "title": "PCI bandwith utilization",
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": "gpu_pci_rx_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "1024"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": "gpu_pci_tx_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "1024"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "gpu_pci_rx_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}": true,
+              "gpu_pci_rx_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"} / 1024": false,
+              "gpu_pci_tx_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"}": true,
+              "gpu_pci_tx_util {gpuid=\"00000000:84:00.0\", host=\"proxmox\", name=\"nvidia-smi\"} / 1024": false
+            },
+            "indexByName": {},
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 36,
+      "panels": [],
+      "title": "Energy and Temperatures",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 4,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "nvidia-smi_gpu_power_readings_max_power_limit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "max power limit"
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "nvidia-smi_gpu_power_readings_min_power_limit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "min power limit"
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "nvidia-smi_gpu_power_readings_power_draw"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "power draw"
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "solid"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "nvidia-smi_gpu_power_readings_power_limit"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "power limit"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 0,
+        "y": 21
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"strings\"\nimport \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_power_readings_power_draw\" or r[\"_field\"] == \"gpu_power_readings_power_limit\" or r[\"_field\"] == \"gpu_power_readings_min_power_limit\" or r[\"_field\"] == \"gpu_power_readings_max_power_limit\")\n   |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> filter(fn: (r) => r._value != \"\")\n  |> toFloat()\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_measurement\", \"_field\"], valueColumn: \"_value\")\n  |> yield(name: \"last\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Power",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_fan_speed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F2495C",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "%"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Fan Speed"
+              },
+              {
+                "id": "custom.axisColorMode",
+                "value": "series"
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "displayName",
+                "value": "Fan speed"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_temperature_gpu_temp {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "GPU"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_temperature_gpu_temp_max_threshold"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Max treshold"
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_temperature_gpu_target_temperature {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Target temperature"
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 10,
+        "y": 21
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"regexp\"\nimport \"internal/debug\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_fan_speed\" or r[\"_field\"] == \"gpu_temperature_gpu_temp\" or r[\"_field\"] == \"gpu_temperature_memory_temp\" or r[\"_field\"] == \"gpu_temperature_gpu_temp_max_threshold\" or r[\"_field\"] == \"gpu_temperature_gpu_target_temperature\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> filter(fn: (r) => r._value != \"\")\n  |> toInt()\n  \n  |> yield(name: \"last\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Temperature / Fan Speed",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 31,
+      "panels": [],
+      "title": "Clocks",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "MHz"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_clocks_graphics_clock {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "graphics"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_clocks_mem_clock {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "mem"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_clocks_sm_clock {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "sm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_clocks_video_clock {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "video"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 0,
+        "y": 27
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n |> filter(fn: (r) => r[\"_field\"] == \"gpu_clocks_graphics_clock\" or r[\"_field\"] == \"gpu_clocks_sm_clock\" or r[\"_field\"] == \"gpu_clocks_mem_clock\" or r[\"_field\"] == \"gpu_clocks_video_clock\")\n   |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> toInt()\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Clocks",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "dark-red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "applications_clocks_setting"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Applications Clocks Settings"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "display_clocks_setting"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Display Clocks Settings"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_idle"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "GPU Idle"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hw_power_brake_slowdown"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Hardware Power Brake Slowdown"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hw_slowdown"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Hardware Slowdown"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hw_thermal_slowdown"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Hardware Thermal Slowdown"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sw_power_cap"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Software Power Cap"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sw_thermal_slowdown"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Software Thermal Slowdown"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sync_boost"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Sync Boost"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 10,
+        "y": 27
+      },
+      "id": 42,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "none",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "from(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_applications_clocks_setting\"   or r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_display_clocks_setting\" or r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_gpu_idle\" or r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_hw_power_brake_slowdown\" or r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_hw_slowdown\" or r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_sw_thermal_slowdown\" or r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_sync_boost\" or r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_hw_thermal_slowdown\" or r[\"_field\"] == \"gpu_clocks_throttle_reasons_clocks_throttle_reason_sw_power_cap\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> map(fn: (r) => ({\n\n        r with _value: if r._value == \"Active\" then 1 else 0\n    }))\n  |> pivot(rowKey:[\"_time\"], columnKey:[\"_field\"], valueColumn:\"_value\")\n|> rename(columns: {\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_applications_clocks_setting\": \"applications_clocks_setting\",\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_display_clocks_setting\": \"display_clocks_setting\",\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_gpu_idle\": \"gpu_idle\",\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_hw_power_brake_slowdown\": \"hw_power_brake_slowdown\",\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_hw_slowdown\": \"hw_slowdown\",\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_sw_thermal_slowdown\": \"sw_thermal_slowdown\",\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_sync_boost\": \"sync_boost\",\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_hw_thermal_slowdown\": \"hw_thermal_slowdown\",\n        \"gpu_clocks_throttle_reasons_clocks_throttle_reason_sw_power_cap\": \"sw_power_cap\"\n    })",
+          "refId": "A"
+        }
+      ],
+      "title": "Throttling",
+      "transformations": [],
+      "transparent": true,
+      "type": "status-history"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 26,
+      "panels": [],
+      "title": "Encoder Stats",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_encoder_stats_average_fps {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "fps"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "left"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Average FPS"
+              },
+              {
+                "id": "custom.axisColorMode",
+                "value": "series"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gpu_encoder_stats_average_latency {gpuid=\"00000000:84:00.0\", host=\"proxmox\"}"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Average Latency"
+              },
+              {
+                "id": "custom.axisColorMode",
+                "value": "series"
+              },
+              {
+                "id": "custom.lineStyle"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 0,
+        "y": 33
+      },
+      "id": 27,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "query": "import \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] == \"gpu_encoder_stats_average_fps\" or r[\"_field\"] == \"gpu_encoder_stats_average_latency\")\n  \n   |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> toFloat()\n  |> yield(name: \"last\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Encoder Stats",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Sessions",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 10,
+        "y": 33
+      },
+      "id": 29,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "columns": [],
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "query": "import \"regexp\"\n\nfrom(bucket: \"XRRMonitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"gpuid\"] == \"${gpuid}\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"nvidia-smi\")\n  |> filter(fn: (r) => r[\"_field\"] ==\"gpu_encoder_stats_session_count\")\n  \n   |> map(fn: (r) => ({\n      r with\n      _value: regexp.findString(v: string(v: r._value), r: /^(\\d+(?:\\.\\d+)?)/)\n  }))\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> toInt()\n",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "https://github.com/yesoreyeram/grafana-infinity-datasource/blob/main/testdata/users.json",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Session Count",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS_INFLUXDB}"
+        },
+        "definition": "import \"influxdata/influxdb/v1\"\n\nv1.tagValues(bucket: \"XRRMonitoring\", tag: \"host\", predicate: (r) => r._measurement == \"nvidia-smi\")\n",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "host",
+        "options": [],
+        "query": "import \"influxdata/influxdb/v1\"\n\nv1.tagValues(bucket: \"XRRMonitoring\", tag: \"host\", predicate: (r) => r._measurement == \"nvidia-smi\")\n",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS_INFLUXDB}"
+        },
+        "definition": "import \"influxdata/influxdb/v1\"\n\nv1.tagValues(bucket: \"XRRMonitoring\", tag: \"gpuid\", predicate: (r) => r._measurement == \"nvidia-smi\")\n",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "gpuid",
+        "options": [],
+        "query": "import \"influxdata/influxdb/v1\"\n\nv1.tagValues(bucket: \"XRRMonitoring\", tag: \"gpuid\", predicate: (r) => r._measurement == \"nvidia-smi\")\n",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Nvidia-smi",
+  "uid": "VANv-aaVz",
+  "version": 42,
+  "weekStart": ""
+}
