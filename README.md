@@ -53,7 +53,7 @@ I'm not going through telegraf output configuration/installation refer to the [T
 ```
 
 
-##Telegraf configuration - Example
+##Telegraf configuration - Exemple
 ```
 [[inputs.exec]]
   ## Commands array
@@ -72,8 +72,9 @@ I'm not going through telegraf output configuration/installation refer to the [T
 [[inputs.exec.json_v2.object]]
   path = "nvidia_smi_log"
 ```
+##Grafana dashboard
 
-
+![Grafana Dashboard screenshot](https://github.com/XReyRobert/telegraf-nvidia-smi-plugin-on-steroid/blob/main/screenshots/screeshot1.png?raw=true)
 
 You like it? You use it? It saved you a couple of hours? 
 Hey 👋👋👋 [You can now buy me a coffee](https://www.buymeacoffee.com/xrrxrr)! ☕️ 
