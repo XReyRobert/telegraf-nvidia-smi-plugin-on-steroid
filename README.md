@@ -74,6 +74,8 @@ I'm not going through telegraf output configuration/installation refer to the [T
 ```
 ##Grafana dashboard
 
+You can get the [grafana dashboard json](https://raw.githubusercontent.com/XReyRobert/telegraf-nvidia-smi-plugin-on-steroid/main/grafana-dashboard/Nvidia-smi-1679168043300.json)
+
 ![Grafana Dashboard screenshot](https://github.com/XReyRobert/telegraf-nvidia-smi-plugin-on-steroid/blob/main/screenshots/screeshot1.png?raw=true)
 
 You like it? You use it? It saved you a couple of hours? 
